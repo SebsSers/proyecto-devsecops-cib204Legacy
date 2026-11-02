@@ -112,12 +112,14 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Construir la imagen
-        run: docker build -t cifrado:${{ github.sha }} ./servidor
+        env:
+        COMMIT_SHA: ${{ github.sha }}
+        run: docker build -t cifrado:$COMMIT_SHA ./servidor
       - name: Trivy - escaneo de imagen
         uses: aquasecurity/trivy-action@8f28faec26515256b6d22074d1d2a8986f4cbd87
         with:
           scan-type: image
-          image-ref: cifrado:${{ github.sha }}
+          image-ref: cifrado:$COMMIT_SHA
           severity: HIGH,CRITICAL
           exit-code: '1'
           format: table
@@ -125,7 +127,7 @@ jobs:
         if: always()
         uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b
         with:
-          image: cifrado:${{ github.sha }}
+          image: cifrado:$COMMIT_SHA
           output-file: sbom.spdx.json
       - name: Guardar SBOM
         if: always()

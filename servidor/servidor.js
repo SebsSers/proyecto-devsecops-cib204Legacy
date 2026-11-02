@@ -15,6 +15,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const csrf = require('lusca').csrf;
 const { execFile } = require('child_process');
 const cifrado = require('./cifrado');
 const db = require('./db');
@@ -23,6 +24,7 @@ const { requiereAuth } = require('./auth');
 
 const app = express();
 app.use(express.json());
+app.use(csrf());
 
 // [VULN-5] CORS totalmente abierto: cualquier origen puede consumir la API.
 //   Lo reporta OWASP ZAP (DAST) y Semgrep. La solucion es restringir a los
