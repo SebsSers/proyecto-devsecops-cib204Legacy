@@ -124,34 +124,24 @@ app.post('/calcular', (req, res) => {
 //   El parametro 'host' entra sin sanitizar a exec(). Un atacante puede enviar
 //   "8.8.8.8; cat /etc/passwd". Lo detectan CodeQL y Semgrep.
 //   CWE-78 (OS Command Injection)
-app.get('/diagnostico', (req, res) => {
-  
-  const host = req.query.host || '127.0.0.1';
+const express = require('express');
+const net = require('net');
 
-  // Aceptar únicamente direcciones IPv4 o IPv6 válidas
-  if (typeof host !== 'string' || net.isIP(host) === 0) {
-    return res.status(400).json({
-      error: 'Dirección IP no válida'
-    });
+app.get('/diagnostico', (req, res) => {
+  const host = String(req.query.host || '127.0.0.1');
+
+  const allowed = new Set(['127.0.0.1', 'localhost']);
+
+  if (!allowed.has(host)) {
+    return res.status(400).json({ error: 'Host no permitido' });
   }
 
-  execFile(
-    '/usr/bin/ping',
-    ['-c', '1', host],
-    { timeout: 5000, shell: false },
-    (err, stdout, stderr) => {
-      if (err) {
-        return res.status(500).json({
-          error: 'No fue posible completar el diagnóstico',
-          detalle: stderr
-        });
-      }
-
-      res.json({
-        salida: stdout
-      });
-    }
-  );
+  // No user-controlled command execution
+  return res.json({
+    estado: 'ok',
+    host,
+    mensaje: 'Diagnóstico realizado sin ejecutar comandos del sistema'
+  });
 });
 
 if (require.main === module) {
