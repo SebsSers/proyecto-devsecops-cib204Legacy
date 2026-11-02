@@ -7,7 +7,7 @@
 # [VULN-11] Imagen base "latest" (no reproducible) y pesada, con muchos
 #   paquetes de sistema vulnerables. La solucion es una etiqueta fija y una
 #   imagen slim (p.ej. node:20-slim).  CWE-1104 / mala practica de imagen.
-FROM USER node
+FROM node:20-slim
 
 WORKDIR /app
 
