@@ -11,8 +11,8 @@
 
 const config = {
   // Credencial de nube ficticia (patron que Gitleaks reconoce como AWS)
-  AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
-  AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+  AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+  AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
 
   // Secreto para firmar/verificar tokens propios: quemado (mal)
   JWT_SECRET: 'sup3r-s3cr3t0-cib204-no-lo-cambies',
