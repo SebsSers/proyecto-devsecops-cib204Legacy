@@ -114,7 +114,7 @@ jobs:
       - name: Construir la imagen
         run: docker build -t cifrado:${{ github.sha }} ./servidor
       - name: Trivy - escaneo de imagen
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@8f28faec26515256b6d22074d1d2a8986f4cbd87
         with:
           scan-type: image
           image-ref: cifrado:${{ github.sha }}
