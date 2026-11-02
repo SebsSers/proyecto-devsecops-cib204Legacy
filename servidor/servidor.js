@@ -27,7 +27,11 @@ app.use(express.json());
 // [VULN-5] CORS totalmente abierto: cualquier origen puede consumir la API.
 //   Lo reporta OWASP ZAP (DAST) y Semgrep. La solucion es restringir a los
 //   origenes de confianza.  CWE-942 (Overly Permissive CORS)
-app.use(cors());
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // [VULN-6] Faltan cabeceras de seguridad (no se usa Helmet):
 //   sin Content-Security-Policy, X-Content-Type-Options, etc.
