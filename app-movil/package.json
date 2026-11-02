@@ -9,12 +9,19 @@
     "ios": "expo start --ios"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~3.2.3",
     "expo": "~51.0.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.74.5",
-    "react-native-web": "~0.19.10",
-    "@expo/metro-runtime": "~3.2.3"
+    "react-native-web": "~0.19.10"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "tar": "7.5.22",
+    "image-size": "2.0.4",
+    "postcss": "8.5.32",
+    "@xmldom/xmldom": "0.9.12",
+    "send": "0.19.2"
+  }
 }
