@@ -27,8 +27,19 @@ app.use(express.json());
 // [VULN-5] CORS totalmente abierto: cualquier origen puede consumir la API.
 //   Lo reporta OWASP ZAP (DAST) y Semgrep. La solucion es restringir a los
 //   origenes de confianza.  CWE-942 (Overly Permissive CORS)
+const origenesPermitidos = [process.env.ALLOWED_ORIGIN, 'http://localhost:3000'];
+
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Permitir solicitudes sin origen (como Postman o scripts internos) solo en desarrollo si es necesario
+    if (!origin && process.env.NODE_ENV === 'development') return callback(null, true);
+    
+    if (origenesPermitidos.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqueado por la política de CORS'));
+    }
+  },
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
@@ -37,6 +48,11 @@ app.use(cors(corsOptions));
 //   sin Content-Security-Policy, X-Content-Type-Options, etc.
 //   Lo reporta OWASP ZAP.  CWE-693 (Protection Mechanism Failure)
 //   (La solucion es: app.use(require('helmet')()).)
+
+const helmet = require('helmet');
+
+// Agregar Helmet justo después de inicializar app
+app.use(helmet());
 
 // El servicio genera su par de llaves al arrancar.
 const llaves = cifrado.generarLlaves();
@@ -54,7 +70,18 @@ app.post('/cifrar', requiereAuth, (req, res) => {
     // [VULN-7] Sin validacion de entrada: no se controla tipo ni tamano.
     //   Un cuerpo enorme o de tipo inesperado puede tumbar el servicio.
     //   CWE-20 (Improper Input Validation)
-    const texto = req.body.texto;
+    const { texto } = req.body;
+
+    // Validación de tipo y presencia
+    if (!texto || typeof texto !== 'string') {
+      return res.status(400).json({ error: 'El campo "texto" es obligatorio y debe ser una cadena de texto.' });
+    }
+
+    // Validación de longitud máxima (ejemplo: máximo 10 KB)
+    if (texto.length > 10240) {
+      return res.status(400).json({ error: 'El texto excede el tamaño máximo permitido.' });
+    }
+
     const resultado = cifrado.cifrar(texto, llaves.publicKey);
     res.json({ cifrado: resultado });
   } catch (e) {
