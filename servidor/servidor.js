@@ -87,6 +87,8 @@ app.post('/cifrar', requiereAuth, (req, res) => {
   } catch (e) {
     // [VULN-8] Exposicion de detalles internos: se devuelve el stack al cliente.
     //   CWE-209 (Information Exposure Through an Error Message)
+    // Registrar el error completo en el servidor para depuración interna
+    console.error(`[Error interno] ${e.message}`, e.stack);
     res.status(500).json({ error: e.message, stack: e.stack });
   }
 });
