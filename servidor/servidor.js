@@ -15,7 +15,7 @@
 
 const express = require('express');
 const cors = require('cors');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const cifrado = require('./cifrado');
 const db = require('./db');
 const config = require('./config');
@@ -121,10 +121,33 @@ app.post('/calcular', (req, res) => {
 //   "8.8.8.8; cat /etc/passwd". Lo detectan CodeQL y Semgrep.
 //   CWE-78 (OS Command Injection)
 app.get('/diagnostico', (req, res) => {
+  
   const host = req.query.host || '127.0.0.1';
-  exec('ping -c 1 ' + host, (err, stdout, stderr) => {
-    res.json({ salida: stdout, error: stderr });
-  });
+
+  // Aceptar únicamente direcciones IPv4 o IPv6 válidas
+  if (typeof host !== 'string' || net.isIP(host) === 0) {
+    return res.status(400).json({
+      error: 'Dirección IP no válida'
+    });
+  }
+
+  execFile(
+    '/usr/bin/ping',
+    ['-c', '1', host],
+    { timeout: 5000, shell: false },
+    (err, stdout, stderr) => {
+      if (err) {
+        return res.status(500).json({
+          error: 'No fue posible completar el diagnóstico',
+          detalle: stderr
+        });
+      }
+
+      res.json({
+        salida: stdout
+      });
+    }
+  );
 });
 
 if (require.main === module) {
