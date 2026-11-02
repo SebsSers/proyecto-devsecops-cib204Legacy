@@ -95,7 +95,7 @@ jobs:
           npm install --package-lock-only
           npm audit --audit-level=high
       - name: Trivy - dependencias (fs)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@8f28faec26515256b6d22074d1d2a8986f4cbd87
         with:
           scan-type: fs
           scan-ref: servidor
