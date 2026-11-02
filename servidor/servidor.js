@@ -117,35 +117,15 @@ app.get('/buscar', (req, res) => {
 //   Lo detectan Semgrep y CodeQL (js/code-injection).
 //   CWE-95 (Eval Injection)
 
-function calcular(expresion) {
-    const operaciones = {
-        suma: (a, b) => a + b,
-        resta: (a, b) => a - b,
-        multiplicacion: (a, b) => a * b,
-        division: (a, b) => {
-            if (b === 0) throw new Error('División entre cero');
-            return a / b;
-        }
-    };
 
-    const partes = expresion.match(
-        /^(suma|resta|multiplicacion|division)\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)$/
-    );
-
-    if (!partes) {
-        throw new Error('Expresión no permitida');
-    }
-
-    const [, operacion, a, b] = partes;
-
-    return operaciones[operacion](Number(a), Number(b));
-}
 
 app.post('/calcular', (req, res) => {
   const expresion = req.body.expresion || '0';
   try {
-    const resultado = calcular(expresion);
-    res.json({ resultado });
+    const nums = Array.isArray(req.body.numeros) ? req.body.numeros : [];
+    if (!nums.every(n => typeof n === 'number'))
+    return res.status(400).json({ error: 'Entrada invalida' });
+    res.json({ resultado: nums.reduce((a,b)=>a+b,0) });
   } catch (e) {
     res.status(400).json({ error: 'Expresion invalida' });
   }
@@ -159,20 +139,11 @@ const express = require('express');
 const net = require('net');
 
 app.get('/diagnostico', (req, res) => {
-  const host = String(req.query.host || '127.0.0.1');
-
-  const allowed = new Set(['127.0.0.1', 'localhost']);
-
-  if (!allowed.has(host)) {
-    return res.status(400).json({ error: 'Host no permitido' });
-  }
-
-  // No user-controlled command execution
-  return res.json({
-    estado: 'ok',
-    host,
-    mensaje: 'Diagnóstico realizado sin ejecutar comandos del sistema'
-  });
+  const host = req.query.host || '127.0.0.1';
+  const { execFile } = require('child_process');
+  if (!/^[a-zA-Z0-9.-]{1,64}$/.test(host))
+    return res.status(400).json({ error: 'Host invalido' });
+  execFile('ping', ['-c','1',host], (e,out)=>res.json({salida:out}));
 });
 
 if (require.main === module) {
