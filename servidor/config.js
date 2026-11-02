@@ -15,10 +15,10 @@ const config = {
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
 
   // Secreto para firmar/verificar tokens propios: quemado (mal)
-  JWT_SECRET: 'sup3r-s3cr3t0-cib204-no-lo-cambies',
+  JWT_SECRET: process.env.JWT_SECRET,
 
   // Cadena de conexion con contrasena en claro (mal)
-  DATABASE_URL: 'mysql://root:Admin1234@localhost:3306/appmovil',
+  DATABASE_URL: process.env.DATABASE_URL,
 
   // Control de acceso DESACTIVADO por defecto (mal)
   AUTH_ENABLED: process.env.AUTH_ENABLED === 'true' ? true : false,
