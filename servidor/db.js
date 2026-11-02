@@ -28,15 +28,16 @@ try {
 //   La solucion son consultas parametrizadas (placeholders '?').
 //   CWE-89 (SQL Injection)
 function buscarBitacora(nombre, callback) {
-  const sql = "SELECT * FROM bitacora WHERE usuario = '?'";
+  const sql = "SELECT * FROM bitacora WHERE usuario = ?";
   if (!conexion) {
     return callback(null, { sqlEjecutado: sql, filas: [] });
   }
-  conexion.query(sql, function (err, filas) {
+
+  conexion.query(sql, [nombre], function (err, filas) {
     if (err) {
       return callback(null, { sqlEjecutado: sql, filas: [], nota: err.code });
     }
-    return callback(null, { sqlEjecutado: sql, filas: filas });
+    return callback(null, { sqlEjecutado: sql, filas });
   });
 }
 
