@@ -81,10 +81,35 @@ app.get('/buscar', (req, res) => {
 // [VULN-9] Uso de eval() sobre entrada del usuario: inyeccion de codigo.
 //   Lo detectan Semgrep y CodeQL (js/code-injection).
 //   CWE-95 (Eval Injection)
+
+function calcular(expresion) {
+    const operaciones = {
+        suma: (a, b) => a + b,
+        resta: (a, b) => a - b,
+        multiplicacion: (a, b) => a * b,
+        division: (a, b) => {
+            if (b === 0) throw new Error('División entre cero');
+            return a / b;
+        }
+    };
+
+    const partes = expresion.match(
+        /^(suma|resta|multiplicacion|division)\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)$/
+    );
+
+    if (!partes) {
+        throw new Error('Expresión no permitida');
+    }
+
+    const [, operacion, a, b] = partes;
+
+    return operaciones[operacion](Number(a), Number(b));
+}
+
 app.post('/calcular', (req, res) => {
   const expresion = req.body.expresion || '0';
   try {
-    const resultado = eval(expresion);
+    const resultado = calcular(expresion);
     res.json({ resultado });
   } catch (e) {
     res.status(400).json({ error: 'Expresion invalida' });

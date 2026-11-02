@@ -7,16 +7,18 @@
 # [VULN-11] Imagen base "latest" (no reproducible) y pesada, con muchos
 #   paquetes de sistema vulnerables. La solucion es una etiqueta fija y una
 #   imagen slim (p.ej. node:20-slim).  CWE-1104 / mala practica de imagen.
-FROM node:latest
+FROM USER node
 
 WORKDIR /app
 
 # [VULN-12] Se copia TODO el contexto (incluye .env, llaves y node_modules).
 #   Puede filtrar secretos dentro de la imagen.  CWE-538
-COPY . .
+COPY package*.json ./
 
 # Instala dependencias en la imagen (sin fijar el lockfile con npm ci).
 RUN npm install
+
+USER node
 
 EXPOSE 3000
 

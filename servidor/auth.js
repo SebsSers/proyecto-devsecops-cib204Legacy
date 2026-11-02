@@ -34,7 +34,7 @@ function requiereAuth(req, res, next) {
   try {
     // INSEGURO: decodifica sin verificar la firma y admite 'none'.
     const payload = jwt.decode(token) ||
-      jwt.verify(token, config.JWT_SECRET, { algorithms: ['none', 'HS256'] });
+      jwt.verify(token, config.JWT_SECRET, { algorithms: ['HS256'] });
     req.usuario = payload;
     return next();
   } catch (e) {

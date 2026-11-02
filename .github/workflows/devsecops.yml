@@ -22,13 +22,13 @@ jobs:
     container:
       image: semgrep/semgrep
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Ejecutar Semgrep
         # --error hace fallar el job si hay hallazgos; se guarda el SARIF.
         run: semgrep scan --config p/default --config p/javascript --config p/nodejs --error --sarif --output semgrep.sarif .
       - name: Guardar reporte Semgrep
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: reporte-semgrep
           path: semgrep.sarif
@@ -47,14 +47,14 @@ jobs:
       actions: read
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Inicializar CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@2a2dd30f8030072d379eb0c9ea51789aa2ea9ca4
         with:
           languages: javascript
           queries: security-extended
       - name: Analizar con CodeQL
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@2a2dd30f8030072d379eb0c9ea51789aa2ea9ca4
 
   # ==========================================================================
   # 3) Deteccion de secretos con Gitleaks  ->  .env, llave privada, claves AWS
@@ -63,7 +63,7 @@ jobs:
     name: Secretos - Gitleaks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
       - name: Ejecutar Gitleaks
@@ -73,7 +73,7 @@ jobs:
             --report-format sarif --report-path /repo/gitleaks.sarif
       - name: Guardar reporte Gitleaks
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: reporte-gitleaks
           path: gitleaks.sarif
@@ -85,8 +85,8 @@ jobs:
     name: SCA - Dependencias
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 20
       - name: npm audit (falla en severidad alta o critica)
@@ -110,7 +110,7 @@ jobs:
     name: Imagen - Trivy + SBOM
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Construir la imagen
         run: docker build -t cifrado:${{ github.sha }} ./servidor
       - name: Trivy - escaneo de imagen
@@ -123,13 +123,13 @@ jobs:
           format: table
       - name: Generar SBOM (Syft)
         if: always()
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b
         with:
           image: cifrado:${{ github.sha }}
           output-file: sbom.spdx.json
       - name: Guardar SBOM
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sbom
           path: sbom.spdx.json
@@ -141,7 +141,7 @@ jobs:
     name: DAST - OWASP ZAP
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Levantar el servicio
         run: |
           docker build -t cifrado ./servidor
@@ -156,7 +156,7 @@ jobs:
             zap-baseline.py -t http://localhost:3000 -r informe_zap.html -a -I || true
       - name: Guardar informe ZAP
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: reporte-zap
           path: zap/informe_zap.html
