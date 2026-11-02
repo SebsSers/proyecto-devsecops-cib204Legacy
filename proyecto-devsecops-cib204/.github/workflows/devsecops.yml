@@ -1,0 +1,162 @@
+name: Pipeline DevSecOps CIB-204
+
+# Se ejecuta en cada push y en cada pull request a main, y a mano desde Actions.
+on:
+  push:
+    branches: ["main", "inseguro", "solucion"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+# Permisos minimos; el job de CodeQL necesita escribir eventos de seguridad.
+permissions:
+  contents: read
+
+jobs:
+  # ==========================================================================
+  # 1) SAST con Semgrep  ->  detecta eval(), inyeccion SQL/comandos, JWT, CORS
+  # ==========================================================================
+  sast_semgrep:
+    name: SAST - Semgrep
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ejecutar Semgrep
+        # --error hace fallar el job si hay hallazgos; se guarda el SARIF.
+        run: semgrep scan --config p/default --config p/javascript --config p/nodejs --error --sarif --output semgrep.sarif .
+      - name: Guardar reporte Semgrep
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-semgrep
+          path: semgrep.sarif
+
+  # ==========================================================================
+  # 2) SAST con CodeQL  ->  motor de analisis de GitHub para JavaScript
+  #    NOTA: en repositorios PRIVADOS, el escaneo de codigo (CodeQL) requiere
+  #    GitHub Advanced Security. Con el plan gratuito, haz el repo PUBLICO
+  #    para este laboratorio, o apoyate en Semgrep como SAST principal.
+  # ==========================================================================
+  sast_codeql:
+    name: SAST - CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          queries: security-extended
+      - name: Analizar con CodeQL
+        uses: github/codeql-action/analyze@v3
+
+  # ==========================================================================
+  # 3) Deteccion de secretos con Gitleaks  ->  .env, llave privada, claves AWS
+  # ==========================================================================
+  secretos:
+    name: Secretos - Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ejecutar Gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.18.4 \
+            detect --source=/repo --no-git -v \
+            --report-format sarif --report-path /repo/gitleaks.sarif
+      - name: Guardar reporte Gitleaks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-gitleaks
+          path: gitleaks.sarif
+
+  # ==========================================================================
+  # 4) SCA - Analisis de dependencias  ->  npm audit + Trivy (sistema de archivos)
+  # ==========================================================================
+  sca:
+    name: SCA - Dependencias
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: npm audit (falla en severidad alta o critica)
+        working-directory: servidor
+        run: |
+          npm install --package-lock-only
+          npm audit --audit-level=high
+      - name: Trivy - dependencias (fs)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: servidor
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          format: table
+
+  # ==========================================================================
+  # 5) Seguridad de la imagen  ->  Trivy (imagen) + SBOM con Syft
+  # ==========================================================================
+  imagen:
+    name: Imagen - Trivy + SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir la imagen
+        run: docker build -t cifrado:${{ github.sha }} ./servidor
+      - name: Trivy - escaneo de imagen
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: image
+          image-ref: cifrado:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          format: table
+      - name: Generar SBOM (Syft)
+        if: always()
+        uses: anchore/sbom-action@v0
+        with:
+          image: cifrado:${{ github.sha }}
+          output-file: sbom.spdx.json
+      - name: Guardar SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+  # ==========================================================================
+  # 6) DAST - OWASP ZAP  ->  ataca la app en ejecucion (cabeceras, CORS, etc.)
+  # ==========================================================================
+  dast:
+    name: DAST - OWASP ZAP
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Levantar el servicio
+        run: |
+          docker build -t cifrado ./servidor
+          docker run -d -p 3000:3000 --name cifrado cifrado
+          sleep 8
+          curl -s http://localhost:3000/salud || true
+      - name: OWASP ZAP Baseline (genera el informe)
+        run: |
+          mkdir -p "$PWD/zap" && chmod 777 "$PWD/zap"
+          docker run --rm --network host -v "$PWD/zap:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://localhost:3000 -r informe_zap.html -a -I || true
+      - name: Guardar informe ZAP
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-zap
+          path: zap/informe_zap.html

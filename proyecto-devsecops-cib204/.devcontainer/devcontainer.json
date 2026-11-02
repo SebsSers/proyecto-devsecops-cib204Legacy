@@ -1,0 +1,22 @@
+{
+  "name": "CIB-204 DevSecOps (Node 20 + Docker)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [3000, 8080, 8081],
+  "portsAttributes": {
+    "3000": { "label": "Servicio de cifrado (API)" },
+    "8080": { "label": "Keycloak (IAM)" },
+    "8081": { "label": "App movil (Expo Web)" }
+  },
+  "postCreateCommand": "node --version && npm --version && docker --version",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "Cliente Cifrado CIB-204",
+    "slug": "app-movil-cib204",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["ios", "android", "web"],
+    "userInterfaceStyle": "light",
+    "web": { "bundler": "metro" }
+  }
+}

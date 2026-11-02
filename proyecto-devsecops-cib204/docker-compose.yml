@@ -1,0 +1,39 @@
+# ============================================================================
+#  docker-compose.yml  -  Levanta el servicio de cifrado y Keycloak (IAM)
+#  CIB-204 Seguridad del Software - Universidad Cenfotec
+# ============================================================================
+services:
+  cifrado:
+    build: ./servidor
+    container_name: cifrado
+    ports:
+      - "3000:3000"
+    environment:
+      # El control de acceso arranca APAGADO (rama insegura). Se activa en la
+      # Seccion de IAM poniendo AUTH_ENABLED=true.
+      - AUTH_ENABLED=${AUTH_ENABLED:-false}
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=appmovil
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: keycloak
+    command: start-dev
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      # === Auto-configuracion para GitHub Codespaces (SIN pasos manuales) ===
+      # Codespaces define automaticamente CODESPACE_NAME y el dominio de
+      # reenvio. Con eso, el compose arma solo la URL publica del puerto 8080
+      # (https, sin ":8080"), asi Keycloak genera enlaces correctos y la
+      # consola de administracion NO rebota a localhost.
+      - KC_HOSTNAME_URL=https://${CODESPACE_NAME}-8080.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}
+      - KC_HOSTNAME_ADMIN_URL=https://${CODESPACE_NAME}-8080.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_ENABLED=true
+      # Confia en las cabeceras del proxy de github.dev (termina el TLS por ti).
+      - KC_PROXY_HEADERS=xforwarded
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

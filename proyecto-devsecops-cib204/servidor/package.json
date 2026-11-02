@@ -1,0 +1,25 @@
+{
+  "name": "servicio-cifrado-cib204",
+  "version": "1.0.0-inseguro",
+  "description": "Servicio de cifrado RSA (version insegura para el laboratorio DevSecOps CIB-204)",
+  "main": "servidor.js",
+  "scripts": {
+    "start": "node servidor.js",
+    "test": "jest --runInBand",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "axios": "0.18.0",
+    "cors": "2.8.5",
+    "express": "4.17.1",
+    "express-jwt": "5.3.3",
+    "jsonwebtoken": "8.3.0",
+    "lodash": "4.17.4",
+    "mysql": "2.17.1"
+  },
+  "devDependencies": {
+    "eslint": "8.57.0",
+    "jest": "29.7.0",
+    "supertest": "6.3.3"
+  }
+}
