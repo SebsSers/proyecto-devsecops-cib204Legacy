@@ -17,8 +17,8 @@ const crypto = require('crypto');
 //   - El tamano de llave (1024 bits) esta por debajo del minimo de 2048 bits
 //     que exigen NIST SP 800-57 y OWASP.
 //   CWE-326 (Inadequate Encryption Strength) / CWE-780 (Use of RSA without OAEP)
-const TAMANO_LLAVE = 1024;
-const RELLENO = crypto.constants.RSA_PKCS1_PADDING;
+const TAMANO_LLAVE = 2048;
+const RELLENO = crypto.constants.RSA_PKCS1_OAEP_PADDING;
 
 function generarLlaves() {
   const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
