@@ -119,7 +119,7 @@ jobs:
         uses: aquasecurity/trivy-action@8f28faec26515256b6d22074d1d2a8986f4cbd87
         with:
           scan-type: image
-          image-ref: cifrado:$COMMIT_SHA
+          image-ref: cifrado:${{ github.sha }}
           severity: HIGH,CRITICAL
           exit-code: '1'
           format: table
@@ -127,7 +127,7 @@ jobs:
         if: always()
         uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b
         with:
-          image: cifrado:$COMMIT_SHA
+          image: cifrado:${{ github.sha }}
           output-file: sbom.spdx.json
       - name: Guardar SBOM
         if: always()
